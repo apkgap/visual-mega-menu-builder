@@ -23,6 +23,42 @@
 
 ---
 
+## ตัวอย่างหน้าจอการใช้งาน (UI Preview)
+
+### 1. Admin Visual Drag & Drop Builder
+<p align="center">
+  <img src="assets/images/preview-admin-builder.jpg" alt="Admin Visual Drag & Drop Builder" width="900" />
+  <br />
+  <sub>หน้าจัดการหลังบ้าน React + TypeScript: จัดโครงสร้างเมนู, คอลัมน์, Content Picker และ Live Preview แบบเรียลไทม์</sub>
+</p>
+
+### 2. Frontend Responsive Views (Desktop & Mobile)
+
+<table>
+  <thead>
+    <tr>
+      <th width="70%">Desktop — Mega Dropdown View</th>
+      <th width="30%">Mobile — Accordion Tree View</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center" valign="middle">
+        <img src="assets/images/preview-desktop.png" alt="Desktop Mega Dropdown View" width="100%" />
+      </td>
+      <td align="center" valign="middle">
+        <img src="assets/images/preview-mobile.png" alt="Mobile Accordion Tree View" width="220" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><sub>แสดงผลแบบ Sidebar Tabs คู่กับ Multi-Column Mega Menu</sub></td>
+      <td align="center"><sub>แสดงผลแบบสลับแท็บและ Accordion บนหน้าจอมือถือ</sub></td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
 ## Sitemap & Architecture (แผนผังระบบและโครงสร้างไฟล์)
 
 <p align="center">
@@ -83,6 +119,9 @@ visual-mega-menu-builder/
 │   └── admin-mega-menu.asset.php
 └── assets/
     ├── images/
+    │   ├── preview-admin-builder.jpg       # ภาพตัวอย่างหน้า Admin Visual Builder
+    │   ├── preview-desktop.png             # ภาพตัวอย่างหน้าบ้าน Desktop Mega Dropdown
+    │   ├── preview-mobile.png              # ภาพตัวอย่างหน้าบ้าน Mobile Accordion
     │   └── sitemap.jpg                     # รูปแผนผัง Sitemap & Architecture ของปลั๊กอิน
     ├── css/
     │   ├── visual-mega-menu-admin.css      # สไตล์หน้า Admin Builder
