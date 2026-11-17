@@ -1,6 +1,15 @@
+<div align="center">
+
 # Visual Mega Menu Builder
 
-ปลั๊กอิน WordPress สำหรับสร้าง จัดการ และแสดงผล **Mega Menu** ของหมวดหมู่สินค้า (WooCommerce Product Categories) และลิงก์กำหนดเอง พร้อมหน้าจัดการหลังบ้านแบบ **Visual Drag & Drop Builder** (React + TypeScript)
+**ปลั๊กอิน WordPress สำหรับสร้าง จัดการ และแสดงผล Mega Menu สำหรับ WooCommerce พร้อมหน้าจัดการหลังบ้านแบบ Visual Drag & Drop Builder (React + TypeScript)**
+
+![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759B?style=flat-square&logo=wordpress&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-7.4%2B-777BB4?style=flat-square&logo=php&logoColor=white)
+![React](https://img.shields.io/badge/React-TypeScript-61DAFB?style=flat-square&logo=react&logoColor=black)
+![WooCommerce](https://img.shields.io/badge/WooCommerce-Compatible-96588A?style=flat-square&logo=woocommerce&logoColor=white)
+
+</div>
 
 ---
 
@@ -15,6 +24,15 @@
 ---
 
 ## Sitemap & Architecture (แผนผังระบบและโครงสร้างไฟล์)
+
+<p align="center">
+  <img src="assets/images/sitemap.jpg" alt="Visual Mega Menu Builder — Plugin Sitemap & Architecture" width="900" />
+  <br />
+  <sub>แผนผังสถาปัตยกรรมและโครงสร้างการทำงานของปลั๊กอิน Visual Mega Menu Builder</sub>
+</p>
+
+<details>
+<summary>ดูแผนผังแบบ Mermaid Diagram (Interactive Code)</summary>
 
 ```mermaid
 flowchart TD
@@ -37,37 +55,41 @@ flowchart TD
     Frontend --> Remix["assets/remixicon/fonts/remixicon.css"]
 ```
 
+</details>
+
 ### โครงสร้างโฟลเดอร์ (Directory Sitemap)
 
 ```text
 visual-mega-menu-builder/
-├── visual-mega-menu-builder.php          # Bootstrap หลัก, ค่าคงที่, Activation Hook และ Helper Function
-├── package.json                          # สคริปต์ build/watch สำหรับ @wordpress/scripts
-├── README.md                             # เอกสารคู่มือและ Sitemap ของปลั๊กอิน
+├── visual-mega-menu-builder.php            # Bootstrap หลัก, ค่าคงที่, Activation Hook และ Helper Function
+├── package.json                            # สคริปต์ build/watch สำหรับ @wordpress/scripts
+├── README.md                               # เอกสารคู่มือและ Sitemap ของปลั๊กอิน
 ├── includes/
-│   ├── class-visual-mega-menu-admin.php  # ลงทะเบียนเมนูหลังบ้าน (Visual Mega Menu) และโหลด Assets
-│   ├── class-visual-mega-menu-rest.php   # REST API (GET/POST options, mega-builder-data, mega-categories, reset-preset)
+│   ├── class-visual-mega-menu-admin.php    # ลงทะเบียนเมนูหลังบ้าน (Visual Mega Menu) และโหลด Assets
+│   ├── class-visual-mega-menu-rest.php     # REST API (GET/POST options, mega-builder-data, mega-categories, reset-preset)
 │   ├── class-visual-mega-menu-frontend.php # Shortcode [visual_mega_menu], ตัวเรนเดอร์ Desktop/Mobile และ Polyfill
-│   └── mega-menu-excel-preset.json       # ข้อมูล Preset เริ่มต้นสำหรับสร้างเมนูครั้งแรกหรือรีเซ็ต
-├── src/admin/                            # ซอร์สโค้ด React + TypeScript (Admin Builder)
-│   ├── admin-mega-menu.tsx               # Entry point เมานต์เข้า #visual-mega-menu-builder-root
-│   ├── MegaMenuSettings.tsx              # คอนโทรลเลอร์หลัก, Import/Export JSON, Save/Reset
-│   ├── MenuStructure.tsx                 # จัดการรายการเมนูหลัก (Level 1)
-│   ├── MegaMenuColumnBuilder.tsx         # จัดการคอลัมน์และลิงก์ย่อย (Level 2–4)
-│   ├── MenuItemSettings.tsx              # ตั้งค่าการแสดงผลรายเมนู (ไอคอน, คอลัมน์, ความกว้าง, Hover)
-│   ├── ContentPicker.tsx                 # ตัวเลือก Pages / Categories / Products จาก WordPress/WooCommerce
-│   ├── LivePreview.tsx                   # พรีวิวผลลัพธ์แบบเรียลไทม์ในหน้า Admin
-│   └── types.ts                          # TypeScript Interfaces ของระบบ Builder
-├── dist/                                 # ไฟล์คอมไพล์สำหรับหน้า Admin (สร้างจาก npm run build)
+│   └── mega-menu-excel-preset.json         # ข้อมูล Preset เริ่มต้นสำหรับสร้างเมนูครั้งแรกหรือรีเซ็ต
+├── src/admin/                              # ซอร์สโค้ด React + TypeScript (Admin Builder)
+│   ├── admin-mega-menu.tsx                 # Entry point เมานต์เข้า #visual-mega-menu-builder-root
+│   ├── MegaMenuSettings.tsx                # คอนโทรลเลอร์หลัก, Import/Export JSON, Save/Reset
+│   ├── MenuStructure.tsx                   # จัดการรายการเมนูหลัก (Level 1)
+│   ├── MegaMenuColumnBuilder.tsx           # จัดการคอลัมน์และลิงก์ย่อย (Level 2–4)
+│   ├── MenuItemSettings.tsx                # ตั้งค่าการแสดงผลรายเมนู (ไอคอน, คอลัมน์, ความกว้าง, Hover)
+│   ├── ContentPicker.tsx                   # ตัวเลือก Pages / Categories / Products จาก WordPress/WooCommerce
+│   ├── LivePreview.tsx                     # พรีวิวผลลัพธ์แบบเรียลไทม์ในหน้า Admin
+│   └── types.ts                            # TypeScript Interfaces ของระบบ Builder
+├── dist/                                   # ไฟล์คอมไพล์สำหรับหน้า Admin (สร้างจาก npm run build)
 │   ├── admin-mega-menu.js
 │   └── admin-mega-menu.asset.php
 └── assets/
+    ├── images/
+    │   └── sitemap.jpg                     # รูปแผนผัง Sitemap & Architecture ของปลั๊กอิน
     ├── css/
-    │   ├── visual-mega-menu-admin.css    # สไตล์หน้า Admin Builder
-    │   └── visual-mega-menu-frontend.css # สไตล์หน้าบ้าน (Desktop Tabs + Mobile Accordion)
+    │   ├── visual-mega-menu-admin.css      # สไตล์หน้า Admin Builder
+    │   └── visual-mega-menu-frontend.css   # สไตล์หน้าบ้าน (Desktop Tabs + Mobile Accordion)
     ├── js/
-    │   └── visual-mega-menu-frontend.js  # สคริปต์สลับแท็บ (Hover/Click) และเปิด-ปิด Accordion บนมือถือ
-    └── remixicon/                        # ชุดไอคอน Remix Icon (CSS + Webfonts)
+    │   └── visual-mega-menu-frontend.js    # สคริปต์สลับแท็บ (Hover/Click) และเปิด-ปิด Accordion บนมือถือ
+    └── remixicon/                          # ชุดไอคอน Remix Icon (CSS + Webfonts)
 ```
 
 ---
@@ -76,15 +98,18 @@ visual-mega-menu-builder/
 
 ### 1. Shortcode
 วาง Shortcode ในหน้าเพจ, โพสต์, หรือ Widget:
+
 ```text
 [visual_mega_menu]
 ```
+
 รองรับพารามิเตอร์:
 - `layout`: `both` (ค่าเริ่มต้น) | `desktop` | `mobile`
 - `active_tab`: key ของแท็บที่ต้องการเปิดเป็นค่าเริ่มต้น
 
 ### 2. PHP Template Helper
 เรียกใช้ในไฟล์ธีม (เช่น `header.php`):
+
 ```php
 if ( function_exists( 'visual_render_mega_menu' ) ) {
     visual_render_mega_menu( array(
