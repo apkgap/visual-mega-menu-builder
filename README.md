@@ -199,6 +199,10 @@ if ( function_exists( 'visual_render_mega_menu' ) ) {
 | `GET` | `/wp-json/visual-mega-menu/v1/mega-categories` | ดึงหมวดหมู่สินค้า WooCommerce |
 | `POST` | `/wp-json/visual-mega-menu/v1/reset-preset` | รีเซ็ตเมนูกลับไปใช้ค่าจาก `mega-menu-excel-preset.json` |
 
+> **หมายเหตุการเข้ากันได้ (Compatibility Notes):**
+> - ระบบ Sanitize ใน REST API คงรูปแบบคีย์ `camelCase` (`megaMenu`, `subTabs`, `subTabItems`, `categoryCards`, `orderedCategoryIds`, `topPromo`, `brandStrip`) ไว้ครบถ้วน
+> - Frontend รองรับการ Fallback อ่านข้อมูลจาก Option `gbp_mega_menu_builder` อัตโนมัติ เมื่อยังไม่มีข้อมูลใน Option `visual_mega_menu_builder` หรือ Post Meta ของเทมเพลต
+
 ---
 
 ## การพัฒนาและคอมไพล์ (Development)
@@ -207,6 +211,21 @@ if ( function_exists( 'visual_render_mega_menu' ) ) {
 npm install
 npm run watch   # คอมไพล์แบบเฝ้าดูการเปลี่ยนแปลง (Development)
 npm run build   # คอมไพล์ไฟล์ Production ลงใน dist/
+```
+
+---
+
+## โครงสร้าง Git Branch (Git Workflow)
+
+Repository นี้ใช้ 2 Branch หลักควบคู่กัน:
+- `main`: โค้ดสำหรับใช้งานจริง (Production / Stable)
+- `dev`: โค้ดสำหรับการพัฒนาและทดสอบฟีเจอร์ใหม่ (Development)
+
+```bash
+git checkout dev
+git merge main
+git push origin dev
+git checkout main
 ```
 
 ---
