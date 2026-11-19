@@ -33,6 +33,12 @@ const getApiPath = (endpoint: string): string => {
 };
 
 export const MegaMenuSettings = () => {
+	const initCfg = (window as any).VisualMegaMenuSettings || {};
+	const isTemplateMode = Boolean(initCfg.isTemplateMode);
+	const listUrl: string = initCfg.listUrl || '';
+	const [currentPostId, setCurrentPostId] = useState<number>(Number(initCfg.postId) || 0);
+	const [templateTitle, setTemplateTitle] = useState<string>(initCfg.postTitle || 'New Mega Menu');
+
 	const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 	const [defaultWcItems, setDefaultWcItems] = useState<MenuItem[]>([]);
 	const [excelPresetItems, setExcelPresetItems] = useState<MenuItem[]>([]);
@@ -61,10 +67,17 @@ export const MegaMenuSettings = () => {
 				.catch(() => apiFetch({ path: '/starter_theme/v1/mega-builder-data' }))
 				.catch(() => null);
 
-		const fetchOptionsData = () =>
-			apiFetch({ path: getApiPath('/options') })
+		const fetchOptionsData = () => {
+			if (isTemplateMode && currentPostId === 0) {
+				return Promise.resolve({ visual_mega_menu_builder: { menuItems: [] } });
+			}
+			const optPath = currentPostId > 0
+				? getApiPath(`/options?post_id=${currentPostId}`)
+				: getApiPath('/options');
+			return apiFetch({ path: optPath })
 				.catch(() => apiFetch({ path: '/starter_theme/v1/options' }))
 				.catch(() => null);
+		};
 
 		Promise.all([fetchBuilderData(), fetchOptionsData()]).then(([builderData, optionsData]: [any, any]) => {
 			if (!isMounted) {
@@ -722,7 +735,7 @@ export const MegaMenuSettings = () => {
 		setImportError(null);
 		try {
 			const parsed = JSON.parse(rawText);
-			const builderObj = parsed?.visual_mega_menu_builder || parsed;
+			const builderObj = parsed?.visual_mega_menu_builder || parsed?.gbp_mega_menu_builder || parsed;
 			const rawItems = Array.isArray(builderObj?.menuItems)
 				? builderObj.menuItems
 				: Array.isArray(parsed)
@@ -805,29 +818,37 @@ export const MegaMenuSettings = () => {
 					})),
 			}));
 
-		const saveData = {
+		const saveData: any = {
 			visual_mega_menu_builder: {
 				menuItems,
 				visibilitySettings,
 			},
 			visual_mega_menu_items: syncedLegacyItems,
 		};
+		if (isTemplateMode) {
+			saveData.is_template = true;
+			saveData.post_id = currentPostId;
+			saveData.title = templateTitle;
+		}
 
 		apiFetch({
 			path: getApiPath('/options'),
 			method: 'POST',
 			data: saveData,
 		})
-			.catch(() =>
-				apiFetch({
-					path: '/starter_theme/v1/options',
-					method: 'POST',
-					data: saveData,
-				})
-			)
-			.then(() => {
+			.then((res: any) => {
+				if (isTemplateMode && res && res.post_id && Number(res.post_id) > 0 && currentPostId === 0) {
+					const newId = Number(res.post_id);
+					setCurrentPostId(newId);
+					if (window.history && window.history.replaceState) {
+						const nextUrl = new URL(window.location.href);
+						nextUrl.searchParams.set('action', 'edit');
+						nextUrl.searchParams.set('vmm_post', String(newId));
+						window.history.replaceState({}, '', nextUrl.toString());
+					}
+				}
 				setIsSaving(false);
-				setSaveToast('บันทึกการตั้งค่าไปยัง Mega Menu หน้าเว็บเรียบร้อยแล้ว!');
+				setSaveToast('บันทึก Mega Menu Template เรียบร้อยแล้ว!');
 				setTimeout(() => setSaveToast(null), 3500);
 			})
 			.catch(() => {
@@ -1061,6 +1082,43 @@ export const MegaMenuSettings = () => {
 					>
 						Create and customize your mega menu to help customers find what they need.
 					</p>
+					{isTemplateMode && (
+						<div
+							id="mm-template-meta-bar"
+							className="mm-template-meta-bar"
+							style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}
+						>
+							{listUrl && (
+								<a
+									id="mm-back-to-list-link"
+									className="mm-secondary-btn"
+									href={listUrl}
+									style={{ textDecoration: 'none' }}
+								>
+									<i id="mm-back-to-list-ico" className="ri-arrow-left-line"></i>
+									<span>Back to Templates</span>
+								</a>
+							)}
+							<input
+								id="mm-template-title-input"
+								className="mm-template-title-input"
+								type="text"
+								value={templateTitle}
+								onChange={(e) => setTemplateTitle(e.target.value)}
+								placeholder="Template Name..."
+								style={{
+									padding: '6px 12px',
+									borderRadius: '8px',
+									border: '1px solid #CBD5E1',
+									fontSize: '13.5px',
+									fontWeight: 600,
+									color: '#0F172A',
+									minWidth: '240px',
+									backgroundColor: '#FFFFFF',
+								}}
+							/>
+						</div>
+					)}
 				</div>
 
 				<div

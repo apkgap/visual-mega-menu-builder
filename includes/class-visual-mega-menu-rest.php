@@ -71,6 +71,75 @@ class Visual_Mega_Menu_REST {
 	}
 
 	/**
+	 * Mega menu post id from the query string or the JSON body. Zero when it is not one of our posts.
+	 *
+	 * @param array<string, mixed> $body JSON body.
+	 */
+	private function mega_post_id_from_request( WP_REST_Request $request, array $body ): int {
+		$post_id = absint( $request->get_param( 'post_id' ) );
+		if ( $post_id < 1 && ! empty( $body['post_id'] ) ) {
+			$post_id = absint( $body['post_id'] );
+		}
+		if ( $post_id < 1 || Visual_Mega_Menu_CPT::POST_TYPE !== get_post_type( $post_id ) ) {
+			return 0;
+		}
+		return $post_id;
+	}
+
+	/**
+	 * Payload the builder screen loads for one mega menu post.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function config_for_editor( int $post_id ): array {
+		$stored = Visual_Mega_Menu_CPT::get_config( $post_id );
+		if ( empty( $stored['visual_mega_menu_builder'] ) ) {
+			$stored = array(
+				'visual_mega_menu_builder' => array( 'menuItems' => array() ),
+				'visual_mega_menu_items'   => array(),
+			);
+		}
+		$stored['post_id'] = $post_id;
+		return $stored;
+	}
+
+	/**
+	 * Write the builder payload onto one mega menu post.
+	 *
+	 * @param array<string, mixed> $sanitized Clean payload.
+	 */
+	private function save_mega_post( int $post_id, array $sanitized, string $title = '' ): WP_REST_Response {
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return new WP_REST_Response( array( 'message' => 'Forbidden' ), 403 );
+		}
+
+		if ( '' !== trim( $title ) ) {
+			wp_update_post(
+				array(
+					'ID'         => $post_id,
+					'post_title' => sanitize_text_field( $title ),
+				)
+			);
+		}
+
+		$items = $sanitized['visual_mega_menu_builder']['menuItems'] ?? null;
+		if ( is_array( $items ) && ! empty( $items ) ) {
+			$this->ensure_mega_menu_terms_exist( $sanitized['visual_mega_menu_builder']['menuItems'] );
+		}
+
+		update_post_meta( $post_id, Visual_Mega_Menu_CPT::META_CONFIG, $sanitized );
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'post_id' => $post_id,
+				'title'   => get_the_title( $post_id ),
+				'message' => 'Mega Menu saved.',
+			)
+		);
+	}
+
+	/**
 	 * Check admin permission
 	 */
 	public function check_permission(): bool {
@@ -80,7 +149,12 @@ class Visual_Mega_Menu_REST {
 	/**
 	 * Return current options
 	 */
-	public function get_options_api(): WP_REST_Response {
+	public function get_options_api( WP_REST_Request $request ): WP_REST_Response {
+		$post_id = $this->mega_post_id_from_request( $request, array() );
+		if ( $post_id > 0 ) {
+			return rest_ensure_response( $this->config_for_editor( $post_id ) );
+		}
+
 		$plugin_opts = get_option( 'visual_mega_menu_options', array() );
 		$theme_opts  = get_option( 'starter_theme_theme_options', array() );
 
@@ -92,6 +166,9 @@ class Visual_Mega_Menu_REST {
 		} elseif ( is_array( $theme_opts ) && ! empty( $theme_opts['visual_mega_menu_builder'] ) ) {
 			$response['visual_mega_menu_builder'] = $theme_opts['visual_mega_menu_builder'];
 			$response['visual_mega_menu_items']   = $theme_opts['visual_mega_menu_items'] ?? array();
+		} elseif ( is_array( $theme_opts ) && ! empty( $theme_opts['gbp_mega_menu_builder'] ) ) {
+			$response['visual_mega_menu_builder'] = $theme_opts['gbp_mega_menu_builder'];
+			$response['visual_mega_menu_items']   = $theme_opts['gbp_mega_menu_items'] ?? array();
 		} else {
 			// Load from preset JSON
 			$preset = $this->get_excel_preset_data();
@@ -113,7 +190,30 @@ class Visual_Mega_Menu_REST {
 			return new WP_REST_Response( array( 'message' => 'Invalid JSON payload' ), 400 );
 		}
 
-		$sanitized = $this->sanitize_recursively( $params );
+		$sanitized   = $this->sanitize_recursively( $params );
+		$post_id     = $this->mega_post_id_from_request( $request, $sanitized );
+		$is_template = ! empty( $params['is_template'] );
+		$title       = isset( $params['title'] ) ? sanitize_text_field( (string) $params['title'] ) : '';
+		unset( $sanitized['post_id'], $sanitized['is_template'], $sanitized['title'] );
+
+		if ( $post_id > 0 ) {
+			return $this->save_mega_post( $post_id, $sanitized, $title );
+		}
+
+		if ( $is_template ) {
+			$new_post_id = wp_insert_post(
+				array(
+					'post_type'   => Visual_Mega_Menu_CPT::POST_TYPE,
+					'post_status' => 'publish',
+					'post_title'  => '' !== trim( $title ) ? $title : __( 'Untitled Mega Menu', 'visual-mega-menu-builder' ),
+				),
+				true
+			);
+			if ( is_wp_error( $new_post_id ) ) {
+				return new WP_REST_Response( array( 'message' => $new_post_id->get_error_message() ), 500 );
+			}
+			return $this->save_mega_post( (int) $new_post_id, $sanitized );
+		}
 
 		if ( ! empty( $sanitized['visual_mega_menu_builder']['menuItems'] ) && is_array( $sanitized['visual_mega_menu_builder']['menuItems'] ) ) {
 			$this->ensure_mega_menu_terms_exist( $sanitized['visual_mega_menu_builder']['menuItems'] );

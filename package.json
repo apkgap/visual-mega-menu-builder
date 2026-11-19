@@ -2,6 +2,7 @@
   "name": "visual-mega-menu-builder",
   "version": "1.0.0",
   "description": "Visual Mega Menu Builder - Visual SaaS-style Mega Menu Builder for WooCommerce",
+  "author": "Akegapol Pinyopun (https://github.com/apkgap)",
   "license": "GPL-2.0-or-later",
   "scripts": {
     "build": "wp-scripts build src/admin/admin-mega-menu.tsx --output-path=dist",

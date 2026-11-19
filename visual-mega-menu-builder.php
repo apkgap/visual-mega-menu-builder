@@ -1,10 +1,13 @@
 <?php
 /**
  * Plugin Name:       Visual Mega Menu Builder
+ * Plugin URI:        https://github.com/apkgap/visual-mega-menu-builder
  * Description:       ระบบจัดการและแสดงผล Mega Menu สำหรับจัดระเบียบหมวดหมู่สินค้า พร้อมตัวจัดการหลังบ้านแบบลากวาง (React Builder)
  * Version:           1.0.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
+ * Author:            Akegapol Pinyopun
+ * Author URI:        https://github.com/apkgap
  * Text Domain:       visual-mega-menu-builder
  *
  * @package visual-mega-menu-builder
@@ -20,6 +23,8 @@ define( 'VISUAL_MEGA_MENU_VERSION', '1.0.0' );
 define( 'VISUAL_MEGA_MENU_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VISUAL_MEGA_MENU_URL', plugin_dir_url( __FILE__ ) );
 
+require_once VISUAL_MEGA_MENU_PATH . 'includes/class-visual-mega-menu-cpt.php';
+require_once VISUAL_MEGA_MENU_PATH . 'includes/class-visual-mega-menu-nav.php';
 require_once VISUAL_MEGA_MENU_PATH . 'includes/class-visual-mega-menu-rest.php';
 require_once VISUAL_MEGA_MENU_PATH . 'includes/class-visual-mega-menu-admin.php';
 require_once VISUAL_MEGA_MENU_PATH . 'includes/class-visual-mega-menu-frontend.php';
@@ -47,6 +52,16 @@ final class Visual_Mega_Menu_Builder {
 	public $frontend;
 
 	/**
+	 * @var Visual_Mega_Menu_CPT
+	 */
+	public $cpt;
+
+	/**
+	 * @var Visual_Mega_Menu_Nav
+	 */
+	public $nav;
+
+	/**
 	 * Main instance singleton
 	 */
 	public static function instance(): self {
@@ -60,9 +75,14 @@ final class Visual_Mega_Menu_Builder {
 	 * Constructor
 	 */
 	private function __construct() {
+		$this->cpt      = new Visual_Mega_Menu_CPT();
+		$this->nav      = new Visual_Mega_Menu_Nav();
 		$this->rest     = new Visual_Mega_Menu_REST();
 		$this->admin    = new Visual_Mega_Menu_Admin();
 		$this->frontend = new Visual_Mega_Menu_Frontend();
+
+		$this->cpt->init();
+		$this->nav->init();
 
 		add_action( 'rest_api_init', array( $this->rest, 'register_routes' ) );
 
@@ -79,6 +99,9 @@ final class Visual_Mega_Menu_Builder {
 	 * Seed initial options from Excel preset on activation if options are empty
 	 */
 	public function on_activation(): void {
+		Visual_Mega_Menu_CPT::register();
+		flush_rewrite_rules();
+
 		$plugin_opts = get_option( 'visual_mega_menu_options' );
 		$theme_opts  = get_option( 'starter_theme_theme_options' );
 

@@ -203,35 +203,68 @@ class Visual_Mega_Menu_Frontend {
 	}
 
 	/**
-	 * Retrieve normalized configuration
+	 * Tabs and visibility from the saved global mega menu.
 	 *
 	 * @return array{tabs: array, visibility: array}
 	 */
 	public static function get_config(): array {
-		$plugin_opts = get_option( 'visual_mega_menu_options', array() );
-		$builder     = array();
+		return self::build_config( self::load_default_builder() );
+	}
 
+	/**
+	 * Tabs and visibility from one mega menu post payload.
+	 *
+	 * @param array<string, mixed> $stored Saved post meta.
+	 * @return array{tabs: array, visibility: array}
+	 */
+	public static function config_from_stored( array $stored ): array {
+		$builder = array();
+		if ( isset( $stored['visual_mega_menu_builder'] ) && is_array( $stored['visual_mega_menu_builder'] ) ) {
+			$builder = $stored['visual_mega_menu_builder'];
+		}
+		return self::build_config( $builder );
+	}
+
+	/**
+	 * Pick the builder array: plugin option, then theme option, then the Excel preset.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function load_default_builder(): array {
+		$plugin_opts = get_option( 'visual_mega_menu_options', array() );
 		if ( is_array( $plugin_opts ) && ! empty( $plugin_opts['visual_mega_menu_builder'] ) && is_array( $plugin_opts['visual_mega_menu_builder'] ) ) {
-			$builder = $plugin_opts['visual_mega_menu_builder'];
-		} else {
-			$theme_opts = get_option( 'starter_theme_theme_options', array() );
-			if ( is_array( $theme_opts ) && ! empty( $theme_opts['visual_mega_menu_builder'] ) && is_array( $theme_opts['visual_mega_menu_builder'] ) ) {
-				$builder = $theme_opts['visual_mega_menu_builder'];
-			} else {
-				// Fallback to preset
-				$preset_path = VISUAL_MEGA_MENU_PATH . 'includes/mega-menu-excel-preset.json';
-				if ( file_exists( $preset_path ) ) {
-					$preset_raw = file_get_contents( $preset_path );
-					if ( $preset_raw ) {
-						$decoded = json_decode( $preset_raw, true );
-						if ( is_array( $decoded ) && ! empty( $decoded['visual_mega_menu_builder'] ) ) {
-							$builder = $decoded['visual_mega_menu_builder'];
-						}
-					}
-				}
-			}
+			return $plugin_opts['visual_mega_menu_builder'];
 		}
 
+		$theme_opts = get_option( 'starter_theme_theme_options', array() );
+		if ( is_array( $theme_opts ) && ! empty( $theme_opts['visual_mega_menu_builder'] ) && is_array( $theme_opts['visual_mega_menu_builder'] ) ) {
+			return $theme_opts['visual_mega_menu_builder'];
+		}
+		if ( is_array( $theme_opts ) && ! empty( $theme_opts['gbp_mega_menu_builder'] ) && is_array( $theme_opts['gbp_mega_menu_builder'] ) ) {
+			return $theme_opts['gbp_mega_menu_builder'];
+		}
+
+		$preset_path = VISUAL_MEGA_MENU_PATH . 'includes/mega-menu-excel-preset.json';
+		if ( ! file_exists( $preset_path ) ) {
+			return array();
+		}
+
+		$preset_raw = file_get_contents( $preset_path );
+		$decoded    = $preset_raw ? json_decode( $preset_raw, true ) : null;
+		if ( is_array( $decoded ) && ! empty( $decoded['visual_mega_menu_builder'] ) && is_array( $decoded['visual_mega_menu_builder'] ) ) {
+			return $decoded['visual_mega_menu_builder'];
+		}
+
+		return array();
+	}
+
+	/**
+	 * Turn a raw builder array into the structure the template renders.
+	 *
+	 * @param array<string, mixed> $builder Raw builder.
+	 * @return array{tabs: array, visibility: array}
+	 */
+	private static function build_config( array $builder ): array {
 		$vis_raw = isset( $builder['visibilitySettings'] ) && is_array( $builder['visibilitySettings'] )
 			? $builder['visibilitySettings']
 			: array();
@@ -382,7 +415,11 @@ class Visual_Mega_Menu_Frontend {
 	 * Render standalone mega menu HTML
 	 */
 	public function render_menu( array $args = array() ): string {
-		$config     = self::get_config();
+		if ( ! empty( $args['config'] ) && is_array( $args['config'] ) ) {
+			$config = self::config_from_stored( $args['config'] );
+		} else {
+			$config = self::get_config();
+		}
 		$tabs       = $config['tabs'];
 		$visibility = $config['visibility'];
 
@@ -390,13 +427,14 @@ class Visual_Mega_Menu_Frontend {
 			return '';
 		}
 
-		$layout     = $args['layout'] ?? 'both';
-		$active_tab = ! empty( $args['active_tab'] ) ? (string) $args['active_tab'] : $tabs[0]['key'];
+		$layout       = $args['layout'] ?? 'both';
+		$active_tab   = ! empty( $args['active_tab'] ) ? (string) $args['active_tab'] : $tabs[0]['key'];
+		$container_id = ! empty( $args['container_id'] ) ? sanitize_html_class( (string) $args['container_id'] ) : 'visual-mega-menu-builder-container';
 
 		ob_start();
 		?>
 		<!-- id MUST come before class -->
-		<div id="visual-mega-menu-builder-container" class="visual-mega-menu-builder-wrapper">
+		<div id="<?php echo esc_attr( $container_id ); ?>" class="visual-mega-menu-builder-wrapper">
 
 			<?php if ( 'mobile' !== $layout ) : ?>
 			<!-- Desktop View -->
