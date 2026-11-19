@@ -66,32 +66,36 @@
 <p align="center">
   <img src="assets/images/sitemap.jpg" alt="Visual Mega Menu Builder — Plugin Sitemap & Architecture" width="900" />
   <br />
-  <sub>แผนผังสถาปัตยกรรมและโครงสร้างการทำงานของปลั๊กอิน Visual Mega Menu Builder</sub>
+  <sub>แผนผังสถาปัตยกรรม การเชื่อมโยงฐานข้อมูล และการแสดงผลทั้งฝั่ง Admin และ Frontend</sub>
 </p>
 
 <details>
-<summary>ดูแผนผังแบบ Mermaid Diagram (Interactive Code)</summary>
+<summary>ดูแผนผังสถาปัตยกรรมแบบ Mermaid Diagram (Interactive Code)</summary>
 
 ```mermaid
 flowchart TD
-    WP["WordPress Core / WooCommerce"] --> Bootstrap["visual-mega-menu-builder.php\n(Singleton & Activation)"]
+    WP["WordPress Core / WooCommerce"] --> Bootstrap["visual-mega-menu-builder.php\n(Singleton, Constants, Helper)"]
 
     Bootstrap --> CPT["includes/class-visual-mega-menu-cpt.php\n(CPT: vmm_mega_menu)"]
-    Bootstrap --> Nav["includes/class-visual-mega-menu-nav.php\n(nav-menus.php Custom Fields)"]
+    Bootstrap --> Nav["includes/class-visual-mega-menu-nav.php\n(nav-menus.php Custom Fields + Walker)"]
     Bootstrap --> Admin["includes/class-visual-mega-menu-admin.php\n(List View + Builder View)"]
-    Bootstrap --> REST["includes/class-visual-mega-menu-rest.php\n(REST API: /visual-mega-menu/v1)"]
-    Bootstrap --> Frontend["includes/class-visual-mega-menu-frontend.php\n(Shortcode & HTML Renderer)"]
+    Bootstrap --> REST["includes/class-visual-mega-menu-rest.php\n(REST API: visual-mega-menu/v1)"]
+    Bootstrap --> Frontend["includes/class-visual-mega-menu-frontend.php\n(Shortcode, Renderer, Polyfill)"]
 
-    Admin --> ReactApp["src/admin/admin-mega-menu.tsx\n(React Builder UI)"]
-    ReactApp --> BuiltJS["dist/admin-mega-menu.js\n(Compiled Bundle)"]
+    Admin --> ReactApp["src/admin/admin-mega-menu.tsx\n(React + TypeScript Builder)"]
+    ReactApp --> BuiltJS["dist/admin-mega-menu.js"]
     Admin --> AdminCSS["assets/css/visual-mega-menu-admin.css"]
 
-    REST --> Preset["includes/mega-menu-excel-preset.json\n(Default Preset Data)"]
-    REST --> CPTMeta[("wp_posts / wp_postmeta:\nvmm_mega_menu + _vmm_config")]
-    Nav --> NavMeta[("nav_menu_item meta:\n_vmm_enabled + _vmm_mega_id")]
+    REST --> Preset["includes/mega-menu-excel-preset.json"]
+    REST --> CPTMeta[("wp_posts + wp_postmeta\npost_type: vmm_mega_menu\nmeta: _vmm_config")]
+    Nav --> NavMeta[("wp_postmeta (nav_menu_item)\n_vmm_enabled + _vmm_mega_id")]
 
-    Frontend --> CPTMeta
-    Frontend --> NavMeta
+    CPTMeta --> Frontend
+    NavMeta --> Nav
+    Nav -->|"walker_nav_menu_start_el\n(Standard WP Themes)"| Frontend
+    CPTMeta -->|"Per-Item Template ID"| ThemeHeader["Custom Theme Header\n(e.g. gbp-theme / gbp-header.php)"]
+    NavMeta -->|"activeMegaId per Menu Item"| ThemeHeader
+
     Frontend --> FrontCSS["assets/css/visual-mega-menu-frontend.css"]
     Frontend --> FrontJS["assets/js/visual-mega-menu-frontend.js"]
     Frontend --> Remix["assets/remixicon/fonts/remixicon.css"]
@@ -103,19 +107,19 @@ flowchart TD
 
 ```text
 visual-mega-menu-builder/
-├── visual-mega-menu-builder.php            # Bootstrap หลัก, ค่าคงที่, Activation Hook และ Helper Function
+├── visual-mega-menu-builder.php            # Bootstrap หลัก, ค่าคงที่, Activation Hook และ visual_render_mega_menu()
 ├── package.json                            # สคริปต์ build/watch สำหรับ @wordpress/scripts
-├── README.md                               # เอกสารคู่มือและ Sitemap ของปลั๊กอิน
+├── README.md                               # เอกสารคู่มือ Sitemap และโครงสร้างฐานข้อมูล
 ├── includes/
 │   ├── class-visual-mega-menu-cpt.php      # ลงทะเบียน CPT `vmm_mega_menu` และจัดการเมตา `_vmm_config`
-│   ├── class-visual-mega-menu-nav.php      # Hook `wp_nav_menu_item_custom_fields` + บันทึก `_vmm_enabled` / `_vmm_mega_id` บน `nav-menus.php`
+│   ├── class-visual-mega-menu-nav.php      # Hook `wp_nav_menu_item_custom_fields`, `walker_nav_menu_start_el` และบันทึก `_vmm_enabled` / `_vmm_mega_id`
 │   ├── class-visual-mega-menu-admin.php    # เมนูหลัก Visual Mega Menu (หน้า List View ตารางเทมเพลต + หน้า Builder View)
 │   ├── class-visual-mega-menu-rest.php     # REST API (สร้าง/แก้ไข Template, GET/POST options, mega-builder-data, reset-preset)
 │   ├── class-visual-mega-menu-frontend.php # Shortcode [visual_mega_menu], ตัวเรนเดอร์ Desktop/Mobile และ Polyfill
 │   └── mega-menu-excel-preset.json         # ข้อมูล Preset เริ่มต้นสำหรับสร้างเมนูครั้งแรกหรือรีเซ็ต
 ├── src/admin/                              # ซอร์สโค้ด React + TypeScript (Admin Builder)
 │   ├── admin-mega-menu.tsx                 # Entry point เมานต์เข้า #visual-mega-menu-builder-root
-│   ├── MegaMenuSettings.tsx                # คอนโทรลเลอร์หลัก, Import/Export JSON, Save/Reset
+│   ├── MegaMenuSettings.tsx                # คอนโทรลเลอร์หลัก, Ordered Product Categories, Import/Export JSON, Save/Reset
 │   ├── MenuStructure.tsx                   # จัดการรายการเมนูหลัก (Level 1)
 │   ├── MegaMenuColumnBuilder.tsx           # จัดการคอลัมน์และลิงก์ย่อย (Level 2–4)
 │   ├── MenuItemSettings.tsx                # ตั้งค่าการแสดงผลรายเมนู (ไอคอน, คอลัมน์, ความกว้าง, Hover)
@@ -143,27 +147,116 @@ visual-mega-menu-builder/
 
 ## โครงสร้างฐานข้อมูล (Database & Meta Schema)
 
+### 1. ความสัมพันธ์ของข้อมูล (ER Diagram)
+
+```mermaid
+erDiagram
+    WP_POSTS_TEMPLATE {
+        bigint ID PK "vmm_mega_menu Post ID"
+        string post_title "ชื่อเทมเพลต"
+        string post_type "vmm_mega_menu"
+        string post_status "publish | draft"
+    }
+    WP_POSTMETA_TEMPLATE {
+        bigint post_id FK
+        string meta_key "_vmm_config"
+        longtext meta_value "JSON/Array โครงสร้าง Builder"
+    }
+    WP_POSTS_NAV_ITEM {
+        bigint ID PK "nav_menu_item Post ID"
+        string post_title "ชื่อเมนูใน Appearance > Menus"
+        string post_type "nav_menu_item"
+    }
+    WP_POSTMETA_NAV_ITEM {
+        bigint post_id FK
+        string meta_key "_vmm_enabled | _vmm_mega_id"
+        string meta_value "'1'/'0' | Template Post ID"
+    }
+    WP_OPTIONS {
+        string option_name "visual_mega_menu_options | starter_theme_theme_options"
+        longtext option_value "Global Fallback / Theme Legacy Builder"
+    }
+
+    WP_POSTS_TEMPLATE ||--|| WP_POSTMETA_TEMPLATE : "stores config"
+    WP_POSTS_NAV_ITEM ||--o{ WP_POSTMETA_NAV_ITEM : "binds template"
+    WP_POSTMETA_NAV_ITEM }o--|| WP_POSTS_TEMPLATE : "references _vmm_mega_id"
+```
+
+### 2. ตารางสรุป Storage & Meta Keys
+
 | Entity | Storage | Meta Keys / Columns | หน้าที่ |
 | :--- | :--- | :--- | :--- |
-| **Mega Menu Template** | `wp_posts` (`post_type = vmm_mega_menu`) | `ID`, `post_title`, `post_status`, meta `_vmm_config` | เก็บชื่อเทมเพลตและโครงสร้าง JSON ของ Builder (`visual_mega_menu_builder` + `visual_mega_menu_items`) |
+| **Mega Menu Template** | `wp_posts` (`post_type = vmm_mega_menu`) | `ID`, `post_title`, `post_status`, meta `_vmm_config` | เก็บชื่อเทมเพลตและโครงสร้าง Builder (`visual_mega_menu_builder` + `visual_mega_menu_items`) |
 | **Nav Menu Item Binding** | `wp_postmeta` (บน `nav_menu_item`) | `_vmm_enabled` (`'1'`/`'0'`), `_vmm_mega_id` (`int`) | เก็บสถานะเปิด/ปิด Mega Menu และ `post_id` ของเทมเพลตที่เลือกจากหน้า `Appearance > Menus` |
 | **Global Fallback Option** | `wp_options` | `visual_mega_menu_options` | ค่าเริ่มต้น/Fallback กรณีเรียกใช้งานผ่าน Shortcode หรือยังไม่ได้เลือกเทมเพลตเฉพาะ |
+| **Theme Legacy Fallback** | `wp_options` | `starter_theme_theme_options['gbp_mega_menu_builder']` | Fallback อัตโนมัติเมื่อยังไม่มีข้อมูลใน `visual_mega_menu_options` หรือ Post Meta |
+
+### 3. ตัวอย่างโครงสร้าง JSON ภายใน `_vmm_config`
+
+```json
+{
+  "visual_mega_menu_builder": {
+    "menuItems": [
+      {
+        "id": "tab-1",
+        "label": "เซ็ทปิ่นโต",
+        "url": "https://example.com/product-category/bento-set/",
+        "termId": 123,
+        "enableMegaMenu": true,
+        "columnsCount": 4,
+        "dropdownWidth": "container",
+        "iconClass": "ri-box-3-line",
+        "columns": [
+          {
+            "id": "col-1",
+            "heading": "ปิ่นโตกระดาษ",
+            "url": "...",
+            "termId": 124,
+            "items": [
+              { "id": "lnk-1", "label": "รุ่น 2 ชั้น", "url": "...", "openInNewTab": false }
+            ]
+          }
+        ]
+      }
+    ],
+    "visibilitySettings": {
+      "showIcons": true,
+      "hoverToOpen": true,
+      "mobileAccordion": true
+    }
+  },
+  "visual_mega_menu_items": [
+    { "term_id": 123, "enabled": true, "custom_label": "เซ็ทปิ่นโต" }
+  ]
+}
+```
 
 ---
 
-## การใช้งาน (Usage)
+## การใช้งาน (Usage & Integration)
 
 ### 1. สร้างและจัดการ Mega Menu Templates (WP Admin)
-1. ไปที่เมนู **Visual Mega Menu** (`wp-admin/admin.php?page=visual-mega-menu-builder`) จะพบหน้า **List View** แสดงรายการ Templates ทั้งหมด
+1. ไปที่เมนู **Visual Mega Menu** (`wp-admin/admin.php?page=visual-mega-menu-builder`) จะพบหน้า **List View** แสดงรายการ Templates ทั้งหมด พร้อมคอลัมน์สถานะและจำนวนเมนูที่ผูกไว้
 2. กดปุ่ม **Add New Mega Menu** (หรือกด **Open Builder** บนรายการเดิม) เพื่อเปิดหน้า Drag & Drop Builder
-3. ตั้งชื่อเทมเพลตในช่อง **Template Name**, จัดวางหมวดหมู่/คอลัมน์ (หรือกด Import ไฟล์ JSON จากธีมได้โดยตรง), แล้วกด **Save changes**
+3. ตั้งชื่อเทมเพลตในช่อง **Template Name**, จัดวางแท็บ/คอลัมน์ หรือจัดลำดับหมวดหมู่ใน **Ordered Product Categories** (แสดงชื่อหมวดหมู่ WooCommerce จริงให้อัตโนมัติ), แล้วกด **Save changes**
 
-### 2. ผูกเทมเพลตกับเมนูใน WordPress (`nav-menus.php`)
-1. ไปที่ **Appearance > Menus** (`wp-admin/nav-menus.php`) แล้วเลือกเมนูหลัก
-2. เปิดกล่องรายการเมนูที่ต้องการ (เช่น "สินค้า") -> ติ๊ก **เปิดใช้ Mega Menu** และเลือกชื่อเทมเพลตจาก Dropdown **เลือกเมก้าเมนู**
-3. กด **Save Menu** เพื่อบันทึกลง Post Meta ของ Menu Item นั้น
+### 2. Import / Export JSON (ใช้งานร่วมกับธีมได้)
+- ในหน้า Builder สามารถกด **Export JSON** เพื่อสำรองข้อมูลโครงสร้างเมนู หรือกด **Import JSON** เพื่อนำเข้าไฟล์จากเทมเพลตอื่นได้ทันที
+- รองรับทั้งไฟล์จาก `visual-mega-menu-builder` และไฟล์ JSON ที่ Export มาจาก Theme Options (`gbp_mega_menu_builder`)
 
-### 3. Shortcode
+### 3. ผูกเทมเพลตกับเมนูใน WordPress (`nav-menus.php`)
+1. ไปที่ **Appearance > Menus** (`wp-admin/nav-menus.php`) แล้วเลือกเมนูหลักของเว็บไซต์
+2. เปิดกล่องรายการเมนูที่ต้องการ (เช่น `สินค้า` หรือ `งานสั่งผลิตพิมพ์โลโก้`) -> ติ๊ก **เปิดใช้ Mega Menu** และเลือกเทมเพลตเฉพาะของเมนูนั้นจาก Dropdown **เลือกเมก้าเมนู**
+3. สามารถผูก **หลาย Menu Item กับคนละ Template** ได้พร้อมกัน เช่น `สินค้า` ใช้เทมเพลตหมวดสินค้า ส่วน `งานสั่งผลิตพิมพ์โลโก้` ใช้เทมเพลตบริการสั่งผลิต
+4. กด **Save Menu** เพื่อบันทึกลง Post Meta (`_vmm_enabled`, `_vmm_mega_id`) ของ Menu Item นั้น
+
+### 4. การแสดงผลบน Frontend (Desktop & Mobile)
+- **ธีม WordPress ทั่วไปที่ใช้ `wp_nav_menu()`**: ปลั๊กอินจะแทรก Panel ผ่าน Hook `walker_nav_menu_start_el` ให้อัตโนมัติ โดย Desktop แสดงเป็น Mega Dropdown และ Mobile (`<= 1024px`) แสดงเป็น `#visual-mega-mobile-view` (Accordion)
+- **ธีม Custom Header (เช่น `gbp-theme` / `gbp-header.php`)**:
+  - **Desktop**: แยก State ด้วย `activeMegaId` ตามแต่ละ Menu Item ทำให้แสดงข้อมูลตรงตาม Template ที่ผูกไว้และขึ้นสี Active เฉพาะเมนูที่เปิดอยู่
+  - **Mobile Drawer**: เมนูหลัก (`สินค้า`) กดสลับไปแท็บ `หมวดหมู่สินค้า` ส่วนเมนูอื่นที่มี Mega Menu ของตัวเองจะกางรายการหมวดย่อยตาม Template นั้นๆ เป็น Accordion ภายในแท็บ `เมนูหลัก`
+
+### 5. Shortcode & PHP Template Helper
 วาง Shortcode ในหน้าเพจ, โพสต์, หรือ Widget:
 
 ```text
@@ -174,8 +267,7 @@ visual-mega-menu-builder/
 - `layout`: `both` (ค่าเริ่มต้น) | `desktop` | `mobile`
 - `active_tab`: key ของแท็บที่ต้องการเปิดเป็นค่าเริ่มต้น
 
-### 4. PHP Template Helper
-เรียกใช้ในไฟล์ธีม (เช่น `header.php`):
+หรือเรียกใช้ในไฟล์ธีม (เช่น `header.php`):
 
 ```php
 if ( function_exists( 'visual_render_mega_menu' ) ) {
