@@ -702,7 +702,8 @@ class Visual_Mega_Menu_REST {
 		if ( is_array( $data ) ) {
 			$clean = array();
 			foreach ( $data as $k => $v ) {
-				$clean[ sanitize_key( (string) $k ) ] = $this->sanitize_recursively( $v );
+				$safe_key           = is_int( $k ) ? $k : (string) preg_replace( '/[^a-zA-Z0-9_-]/', '', (string) $k );
+				$clean[ $safe_key ] = $this->sanitize_recursively( $v );
 			}
 			return $clean;
 		} elseif ( is_string( $data ) ) {

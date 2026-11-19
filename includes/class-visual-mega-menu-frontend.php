@@ -232,15 +232,15 @@ class Visual_Mega_Menu_Frontend {
 	 */
 	private static function load_default_builder(): array {
 		$plugin_opts = get_option( 'visual_mega_menu_options', array() );
-		if ( is_array( $plugin_opts ) && ! empty( $plugin_opts['visual_mega_menu_builder'] ) && is_array( $plugin_opts['visual_mega_menu_builder'] ) ) {
+		if ( is_array( $plugin_opts ) && ! empty( $plugin_opts['visual_mega_menu_builder'] ) && is_array( $plugin_opts['visual_mega_menu_builder'] ) && ( ! empty( $plugin_opts['visual_mega_menu_builder']['menuItems'] ) || ! empty( $plugin_opts['visual_mega_menu_builder']['menuitems'] ) ) ) {
 			return $plugin_opts['visual_mega_menu_builder'];
 		}
 
 		$theme_opts = get_option( 'starter_theme_theme_options', array() );
-		if ( is_array( $theme_opts ) && ! empty( $theme_opts['visual_mega_menu_builder'] ) && is_array( $theme_opts['visual_mega_menu_builder'] ) ) {
+		if ( is_array( $theme_opts ) && ! empty( $theme_opts['visual_mega_menu_builder'] ) && is_array( $theme_opts['visual_mega_menu_builder'] ) && ( ! empty( $theme_opts['visual_mega_menu_builder']['menuItems'] ) || ! empty( $theme_opts['visual_mega_menu_builder']['menuitems'] ) ) ) {
 			return $theme_opts['visual_mega_menu_builder'];
 		}
-		if ( is_array( $theme_opts ) && ! empty( $theme_opts['gbp_mega_menu_builder'] ) && is_array( $theme_opts['gbp_mega_menu_builder'] ) ) {
+		if ( is_array( $theme_opts ) && ! empty( $theme_opts['gbp_mega_menu_builder'] ) && is_array( $theme_opts['gbp_mega_menu_builder'] ) && ( ! empty( $theme_opts['gbp_mega_menu_builder']['menuItems'] ) || ! empty( $theme_opts['gbp_mega_menu_builder']['menuitems'] ) ) ) {
 			return $theme_opts['gbp_mega_menu_builder'];
 		}
 
@@ -253,6 +253,9 @@ class Visual_Mega_Menu_Frontend {
 		$decoded    = $preset_raw ? json_decode( $preset_raw, true ) : null;
 		if ( is_array( $decoded ) && ! empty( $decoded['visual_mega_menu_builder'] ) && is_array( $decoded['visual_mega_menu_builder'] ) ) {
 			return $decoded['visual_mega_menu_builder'];
+		}
+		if ( is_array( $decoded ) && ! empty( $decoded['gbp_mega_menu_builder'] ) && is_array( $decoded['gbp_mega_menu_builder'] ) ) {
+			return $decoded['gbp_mega_menu_builder'];
 		}
 
 		return array();
@@ -275,10 +278,13 @@ class Visual_Mega_Menu_Frontend {
 			'mobileAccordion' => isset( $vis_raw['mobileAccordion'] ) ? ( $vis_raw['mobileAccordion'] !== false && (string) $vis_raw['mobileAccordion'] !== '0' ) : true,
 		);
 
-		$tabs = array();
+		$tabs       = array();
+		$menu_items = ! empty( $builder['menuItems'] ) && is_array( $builder['menuItems'] )
+			? $builder['menuItems']
+			: ( ! empty( $builder['menuitems'] ) && is_array( $builder['menuitems'] ) ? $builder['menuitems'] : array() );
 
-		if ( ! empty( $builder['menuItems'] ) && is_array( $builder['menuItems'] ) ) {
-			foreach ( $builder['menuItems'] as $idx => $item ) {
+		if ( ! empty( $menu_items ) ) {
+			foreach ( $menu_items as $idx => $item ) {
 				if ( ! is_array( $item ) ) {
 					continue;
 				}
