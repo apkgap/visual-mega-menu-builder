@@ -4,6 +4,7 @@
 
 **ปลั๊กอิน WordPress สำหรับสร้าง จัดการ และแสดงผล Mega Menu สำหรับ WooCommerce พร้อมหน้าจัดการหลังบ้านแบบ Visual Drag & Drop Builder (React + TypeScript)**
 ผมเอามาใช้จริงแล้วก็ปรับไปใช้ กับงานอยู่ๆเรื่อยๆ จึงเกิดเป็น ปลั๊กอินนี้ขึ้นมา แชร์ให้เพื่อนนำไปใช้หรือพัฒนาต่อ ซึ่งปกติ ปลั๊กอิน mega menu จะเป็น builder ใช้งานยากๆ ผมออกแบบให้มันง่ายขึ้นแล้วสามารถกดเปิดใช้ได้ใน list menu ในหน้า wp-nav ได้เลย หรือนำไป custom ก็ง่ายนะ ตัวปลั๊กอินไม่ซับซ้อน
+
 ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759B?style=flat-square&logo=wordpress&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777BB4?style=flat-square&logo=php&logoColor=white)
 ![React](https://img.shields.io/badge/React-TypeScript-61DAFB?style=flat-square&logo=react&logoColor=black)
